@@ -1,0 +1,74 @@
+# frozen_string_literal: true
+
+# Produce Demo.
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Create new App ID(s) in developer portal"
+  desc "Options:"
+  desc "- username: Developer portal username."
+  desc "- team_id: Development team ID."
+  desc "- config: Pattern for Produce.yml lookup, e.g. '**/Produce.yml'."
+  lane :create_app_id do |options|
+    run_produce_action(options, action: :create)
+  end
+
+  desc "Update existing App ID(s) in developer portal"
+  desc "Options:"
+  desc "- username: Developer portal username."
+  desc "- team_id: Development team ID."
+  desc "- config: Pattern for Produce.yml lookup, e.g. '**/Produce.yml'."
+  lane :update_app_id do |options|
+    run_produce_action(options, action: :update)
+  end
+
+  ###
+  # @!group Helpers
+  ###
+
+  # Run Produce action.
+  # @param [Hash] options Options hash.
+  # @param [Symbol] action Action type - `:create` or `:update`.
+  def run_produce_action(options, action:)
+    username = options[:username] || prompt(text: "Username: ")
+    team_id = options[:team_id] || prompt(text: "Team ID: ")
+
+    query = options[:config] || "**/Produce.yml"
+    config_files = find_config_files(query)
+
+    UI.message("Found #{config_files.count} matching configuration files.")
+    config_files.each do |config_file|
+      UI.message("Running #{action} action for #{config_file}")
+      config = YAML.load_file(config_file)
+
+      UI.message("Found #{config['app_ids'].count} App IDs in #{config_file}")
+      config["app_ids"].each do |app_id|
+        params = {
+          username: username,
+          team_id: team_id,
+          app_identifier: app_id["id"]
+        }
+        services = app_id["services"] || {}
+
+        if action == :create
+          params[:app_name] = app_id["name"]
+          params[:skip_itc] = true
+          params[:enable_services] = services
+          produce(params)
+        else
+          params[:services] = services
+          modify_services(params)
+        end
+      end
+    end
+  end
+
+  # Find all produce configs matching the query.
+  # @param [String] query Search query.
+  # @return [Array<String>] List of files matching query.
+  def find_config_files(query)
+    repo_path = `git rev-parse --show-toplevel`.strip
+    Dir[File.join(repo_path, query)]
+  end
+end

@@ -1,0 +1,21 @@
+app_ids:
+  - name: DemoApp
+    id: au.com.cch.demo.app
+    services:
+      access_wifi: "on"
+      app_group: "on"
+      associated_domains: "on"
+      push_notification: "on"
+      wallet: "on"
+
+  - name: DemoAppWatchKitApp
+    id: au.com.cch.demo.wkapp
+
+  - name: DemoAppWatchKitAppExtension
+    id: au.com.cch.demo.wkapp.wkext
+
+  - name: DemoAppTodayExtension
+    id: au.com.cch.demo.todayext
+
+  - name: DemoAppPushServiceExtension
+    id: au.com.cch.demo.pushserviceext
